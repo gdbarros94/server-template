@@ -1,0 +1,75 @@
+---
+- name: Repair and fix development environment
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 60
+      when: ansible_os_family == "Debian"
+
+    - name: Fix broken dependencies
+      shell: apt-get -f install -y
+      when: ansible_os_family == "Debian"
+
+    - name: Remove broken packages
+      apt:
+        state: absent
+        autoremove: yes
+        autoclean: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Verify Flutter installation
+      command: flutter --version
+      ignore_errors: yes
+      register: flutter_check
+
+    - name: Reinstall Flutter if needed
+      command: bash /opt/scripts/install_flutter.sh
+      when: flutter_check.rc != 0
+
+    - name: Verify Android SDK installation
+      command: sdkmanager --list
+      environment:
+        ANDROID_SDK_ROOT: "/opt/android-sdk"
+      ignore_errors: yes
+      register: android_check
+
+    - name: Reinstall Android SDK if needed
+      command: bash /opt/scripts/install_android_sdk.sh
+      when: android_check.rc != 0
+
+    - name: Verify Python environment
+      command: python3 --version
+      ignore_errors: yes
+      register: python_check
+
+    - name: Check PHP modules
+      command: php -m
+      ignore_errors: yes
+      register: php_check
+
+    - name: Rebuild PHP modules if needed
+      shell: |
+        phpenmod curl gd intl json mbstring mysql opcache sqlite3 xml bcmath zip
+      when: php_check.rc == 0
+      ignore_errors: yes
+
+    - name: Display repair results
+      debug:
+        msg:
+          - "✓ Verificação e reparo do ambiente concluído!"
+          - ""
+          - "Status:"
+          - "  Flutter: {{ 'OK' if flutter_check.rc == 0 else 'Reinstalado' }}"
+          - "  Android SDK: {{ 'OK' if android_check.rc == 0 else 'Reinstalado' }}"
+          - "  Python: {{ 'OK' if python_check.rc == 0 else 'Verificar' }}"
+          - "  PHP: {{ 'OK' if php_check.rc == 0 else 'Verificar' }}"
+          - ""
+          - "Se problemas persistirem, verifique os logs e tente:"
+          - "  • apt-get update && apt-get upgrade"
+          - "  • make ansible-full"

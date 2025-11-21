@@ -1,0 +1,29 @@
+---
+- name: Full Development Environment Ansible Configuration
+  hosts: localhost
+  connection: local
+  become: no
+  gather_facts: yes
+
+  vars:
+    packages_extra:
+      - git-flow
+      - jq
+      - yq
+      - bat
+      - exa
+      - ripgrep
+      - fd-find
+      - tldr
+      - direnv
+
+  tasks:
+    - name: Include extra role
+      include_role:
+        name: extra
+
+    - name: Display completion message
+      debug:
+        msg:
+          - "✓ Playbook executado com sucesso!"
+          - "  Pacotes extras instalados e ambiente configurado"

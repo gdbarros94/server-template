@@ -1,0 +1,95 @@
+---
+- name: Install extra development tools and packages
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+
+  vars:
+    packages_extra:
+      - git-flow
+      - jq
+      - yq
+      - ripgrep
+      - fd-find
+      - tldr
+      - direnv
+      - less
+      - man-db
+      - silversearcher-ag
+      - tmux
+      - screen
+      - sox
+      - imagemagick
+      - graphicsmagick
+      - ffmpeg
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install extra packages
+      apt:
+        name: "{{ packages_extra }}"
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install pip packages for enhanced development
+      pip:
+        name:
+          - black
+          - flake8
+          - pylint
+          - pytest
+          - pytest-cov
+          - requests
+          - numpy
+          - pandas
+          - jupyter
+          - ipython
+        state: present
+        executable: pip3
+
+    - name: Install Node.js global packages
+      npm:
+        name: "{{ item }}"
+        global: yes
+        state: present
+      loop:
+        - eslint
+        - prettier
+        - typescript
+        - ts-node
+        - @angular/cli
+        - @vue/cli
+        - create-react-app
+
+    - name: Create development directories structure
+      file:
+        path: "/opt/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - development
+        - development/projects
+        - development/tools
+
+    - name: Display completion message
+      debug:
+        msg:
+          - "✓ Ferramentas e pacotes extras instalados!"
+          - ""
+          - "Pacotes instalados:"
+          - "  • Git Flow para git workflows"
+          - "  • jq e yq para processamento de JSON/YAML"
+          - "  • ripgrep e fd-find para busca rápida"
+          - "  • Ferramentas multimídia (ffmpeg, imagemagick)"
+          - "  • Ferramentas Python (black, pylint, pytest, jupyter)"
+          - "  • Ferramentas Node.js (eslint, prettier, typescript)"
+          - ""
+          - "Próximos passos:"
+          - "  • Crie seus projetos em /opt/development/projects"
+          - "  • Configure suas ferramentas conforme necessário"
