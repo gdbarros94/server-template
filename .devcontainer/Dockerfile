@@ -54,6 +54,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Java
     openjdk-17-jdk \
     openjdk-17-jre \
+    # Android / Mobile tools
+    gradle \
+    android-tools-adb \
     # Utilitários Diversos
     zip \
     unzip \
@@ -101,6 +104,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${DISTRO} main" > /etc/apt/sources.list.d/hashicorp.list && \
     apt-get update && apt-get install -y --no-install-recommends ansible terraform && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Instalar phpMyAdmin de forma não-interativa (pré-configurar debconf)
+RUN apt-get update && apt-get install -y --no-install-recommends debconf-utils \
+    && echo 'phpmyadmin phpmyadmin/dbconfig-install boolean true' | debconf-set-selections \
+    && echo 'phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2' | debconf-set-selections \
+    && echo 'phpmyadmin phpmyadmin/mysql/admin-pass password ' | debconf-set-selections \
+    && echo 'phpmyadmin phpmyadmin/mysql/app-pass password ' | debconf-set-selections \
+    && echo 'phpmyadmin phpmyadmin/app-password-confirm password ' | debconf-set-selections \
+    && apt-get update && apt-get install -y --no-install-recommends phpmyadmin \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* || true
 
 # Configurar PHP com Apache
 RUN a2enmod rewrite \
